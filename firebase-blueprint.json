@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "donors": {
+      "title": "Blood Donors",
+      "description": "Registered blood donors network in Bangladesh",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "gender": { "type": "string" },
+        "age": { "type": "number" },
+        "weightKg": { "type": "number" },
+        "district": { "type": "string" },
+        "area": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "isAvailable": { "type": "boolean" },
+        "lastDonationDate": { "type": "string" },
+        "totalDonations": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "number" },
+        "badge": { "type": "string" },
+        "points": { "type": "number" },
+        "isVerified": { "type": "boolean" },
+        "medicalNotes": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "bloodGroup", "district", "phone", "isAvailable"]
+    },
+    "requests": {
+      "title": "Emergency Blood Requests",
+      "description": "Active and past emergency blood request posts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientName": { "type": "string" },
+        "hospital": { "type": "string" },
+        "district": { "type": "string" },
+        "area": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "bagsCount": { "type": "number" },
+        "urgency": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string" },
+        "postedAt": { "type": "string" },
+        "responsesCount": { "type": "number" }
+      },
+      "required": ["patientName", "hospital", "district", "bloodGroup", "bagsCount", "contactPhone"]
+    },
+    "bloodbanks": {
+      "title": "Hospital Blood Banks",
+      "description": "Real-time stock of blood banks across districts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "district": { "type": "string" },
+        "area": { "type": "string" },
+        "type": { "type": "string" },
+        "contact": { "type": "string" },
+        "hotline": { "type": "string" },
+        "lastUpdated": { "type": "string" },
+        "inventory": { "type": "object" }
+      },
+      "required": ["name", "district", "contact"]
+    },
+    "donations": {
+      "title": "Donation Certificates & Log",
+      "description": "User donation history logs and certificates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "hospital": { "type": "string" },
+        "patientName": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "status": { "type": "string" },
+        "certificateCode": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["hospital", "bloodGroup", "date"]
+    }
+  }
+}

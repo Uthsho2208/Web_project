@@ -1,0 +1,6 @@
+{
+  "name": "BloodMate - AI Blood Donor Network",
+  "description": "AI-powered real-time emergency blood donor network, hospital blood bank inventory, gamified leaderboards, eligibility tracker, and instant alerts for Bangladesh.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
