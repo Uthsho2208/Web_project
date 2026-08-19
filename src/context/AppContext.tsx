@@ -6,6 +6,7 @@ import {
   DiscountVoucher,
   DonationRecord,
   DonorProfile,
+  DonorResponseStatus,
   EmergencyRequest,
   Language,
   LeaderboardEntry
@@ -71,6 +72,10 @@ interface AppContextType {
   selectedPledgeRequest: EmergencyRequest | null;
   openPledgeModal: (req: EmergencyRequest) => void;
   closePledgeModal: () => void;
+  incomingDonorAlert: { request: EmergencyRequest; donorResponse: DonorResponseStatus } | null;
+  openIncomingDonorAlert: (request: EmergencyRequest, donorResponse: DonorResponseStatus) => void;
+  closeIncomingDonorAlert: () => void;
+  simulateIncomingDonorOffer: (requestId: string) => void;
   isCreateProfileOpen: boolean;
   openCreateProfileModal: () => void;
   closeCreateProfileModal: () => void;
@@ -241,6 +246,77 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedPledgeRequest, setSelectedPledgeRequest] = useState<EmergencyRequest | null>(null);
   const openPledgeModal = (req: EmergencyRequest) => setSelectedPledgeRequest(req);
   const closePledgeModal = () => setSelectedPledgeRequest(null);
+
+  const [incomingDonorAlert, setIncomingDonorAlert] = useState<{
+    request: EmergencyRequest;
+    donorResponse: DonorResponseStatus;
+  } | null>(null);
+
+  const openIncomingDonorAlert = (request: EmergencyRequest, donorResponse: DonorResponseStatus) => {
+    setIncomingDonorAlert({ request, donorResponse });
+  };
+
+  const closeIncomingDonorAlert = () => setIncomingDonorAlert(null);
+
+  const simulateIncomingDonorOffer = (requestId: string) => {
+    const targetRequest = requests.find((r) => r.id === requestId);
+    if (!targetRequest) return;
+
+    // Pick a matching donor or use high-rated verified donor
+    const matchingDonors = donors.filter((d) => isBloodCompatible(d.bloodGroup, targetRequest.bloodGroup));
+    const randomDonor = matchingDonors.length > 0
+      ? matchingDonors[Math.floor(Math.random() * matchingDonors.length)]
+      : donors[0];
+
+    const donorNames = [
+      "Dr. Rafiqul Islam (Verified Donor)",
+      "Sabbir Hossain (Regular Donor)",
+      "Nusrat Jahan (Emergency Lifesaver)",
+      "Tanvir Ahmed (Hero Donor)",
+      "Kazi Farhana (Diamond Angel)"
+    ];
+    const pickedName = randomDonor ? randomDonor.name : donorNames[Math.floor(Math.random() * donorNames.length)];
+
+    const simResponse: DonorResponseStatus = {
+      donorId: randomDonor ? randomDonor.id : `sim-donor-${Date.now()}`,
+      donorName: pickedName,
+      donorPhone: randomDonor ? randomDonor.phone : "01712-345678",
+      donorBloodGroup: randomDonor ? randomDonor.bloodGroup : targetRequest.bloodGroup,
+      donorLocation: randomDonor ? `${randomDonor.area}, ${randomDonor.district}` : `${targetRequest.area}, ${targetRequest.district}`,
+      note: language === "bn"
+        ? `আমি রোগী ${targetRequest.patientName}-এর জন্য ${targetRequest.bloodGroup} রক্ত দিতে প্রস্তুত। এখনই রওনা হচ্ছি।`
+        : `I am ready to donate ${targetRequest.bloodGroup} blood for patient ${targetRequest.patientName}. Starting journey now.`,
+      status: "Accepted",
+      responseTime: "এইমাত্র (Just now)",
+      estimatedArrivalMinutes: 25
+    };
+
+    const updatedResponses = [
+      simResponse,
+      ...(targetRequest.donorResponses || []).filter((dr) => dr.donorId !== simResponse.donorId)
+    ];
+
+    const updatedRequest: EmergencyRequest = {
+      ...targetRequest,
+      status: "Donor Assigned",
+      donorResponses: updatedResponses
+    };
+
+    // Update local state
+    setRequests((prev) => prev.map((r) => (r.id === requestId ? updatedRequest : r)));
+
+    // Open the incoming alert pop-up immediately!
+    setIncomingDonorAlert({
+      request: updatedRequest,
+      donorResponse: simResponse
+    });
+
+    triggerNotification(
+      language === "bn"
+        ? `🚨 নতুন রক্তদাতার সাড়া! ${simResponse.donorName} (${simResponse.donorBloodGroup}) রক্ত দিতে সম্মত হয়েছেন!`
+        : `🚨 New donor alert! ${simResponse.donorName} has pledged to donate blood!`
+    );
+  };
 
   const [isCreateProfileOpen, setIsCreateProfileOpen] = useState(false);
   const openCreateProfileModal = () => setIsCreateProfileOpen(true);
@@ -947,6 +1023,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         selectedPledgeRequest,
         openPledgeModal,
         closePledgeModal,
+        incomingDonorAlert,
+        openIncomingDonorAlert,
+        closeIncomingDonorAlert,
+        simulateIncomingDonorOffer,
         isCreateProfileOpen,
         openCreateProfileModal,
         closeCreateProfileModal,

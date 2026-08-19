@@ -43,6 +43,8 @@ export const EmergencyFeedView: React.FC = () => {
     triggerNotification,
     openRequestDetail,
     openPledgeModal,
+    openIncomingDonorAlert,
+    simulateIncomingDonorOffer,
     theme,
   } = useApp();
 
@@ -409,19 +411,41 @@ Shared via BloodMate AI Emergency Network 🇧🇩`;
                     {req.donorResponses.map((dr, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between py-1 border-b border-slate-700/20 last:border-0"
+                        onClick={() => openIncomingDonorAlert(req, dr)}
+                        className={`flex items-center justify-between p-2 rounded-xl border border-transparent hover:border-emerald-500/50 cursor-pointer transition-all ${
+                          isDark ? "hover:bg-slate-800/80" : "hover:bg-emerald-50/70"
+                        }`}
+                        title={language === "bn" ? "রক্তদাতার অফার বিস্তারিত পপ-আপ দেখুন" : "Click to view donor alert popup"}
                       >
                         <span className="font-bold flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                           {dr.donorName}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold">
-                          {dr.status} ({dr.responseTime})
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold">
+                            {dr.status}
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-extrabold underline">
+                            {language === "bn" ? "পপ-আপ" : "View"}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
+
+                {/* Simulate incoming donor offer helper */}
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => simulateIncomingDonorOffer(req.id)}
+                    title={language === "bn" ? "টেস্ট করুন: ডোনার অফার দিলে কেমন পপ-আপ যাবে" : "Simulate incoming donor alert"}
+                    className="text-[11px] text-amber-500 hover:text-amber-400 font-bold flex items-center gap-1 opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-400 animate-spin" />
+                    <span>{language === "bn" ? "⚡ টেস্ট ডোনার অফার পপ-আপ দেখুন" : "⚡ Test Donor Alert Pop-up"}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Action Toolbar */}

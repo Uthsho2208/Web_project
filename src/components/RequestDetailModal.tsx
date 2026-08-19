@@ -25,6 +25,7 @@ import {
   ThumbsUp,
   CheckCheck,
   XCircle,
+  Radio,
   ArrowRight
 } from "lucide-react";
 import {
@@ -57,6 +58,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     updateDonorResponseStatus,
     triggerNotification,
     openPledgeModal,
+    openIncomingDonorAlert,
     theme,
     rankDonors
   } = useApp();
@@ -643,6 +645,15 @@ Dispatched via BloodMate AI Emergency Network.`;
                             <MessageCircle className="w-3 h-3" />
                             <span>{language === "bn" ? "হোয়াটসঅ্যাপ" : "WhatsApp"}</span>
                           </a>
+                          <button
+                            type="button"
+                            onClick={() => openIncomingDonorAlert(request, dr)}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-[11px] flex items-center gap-1 border border-amber-500/30"
+                            title={language === "bn" ? "পূর্ণ পপ-আপ দেখুন" : "View Full Alert Modal"}
+                          >
+                            <Radio className="w-3 h-3 text-amber-400 animate-pulse" />
+                            <span>{language === "bn" ? "পপ-আপ দেখুন" : "Alert Modal"}</span>
+                          </button>
                         </div>
 
                         {/* Acceptance / Status Transition Buttons */}

@@ -7,6 +7,7 @@ import { EmergencyRequestModal } from "./components/EmergencyRequestModal";
 import { RequestDetailModal } from "./components/RequestDetailModal";
 import { CreateProfileModal } from "./components/CreateProfileModal";
 import { DonatePledgeModal } from "./components/DonatePledgeModal";
+import { IncomingDonorAlertModal } from "./components/IncomingDonorAlertModal";
 import { AIChatModal } from "./components/AIChatModal";
 import { BiometricModal } from "./components/BiometricModal";
 import { PaymentModal } from "./components/PaymentModal";
@@ -29,6 +30,8 @@ function MainContent() {
     closeRequestDetail,
     selectedPledgeRequest,
     closePledgeModal,
+    incomingDonorAlert,
+    closeIncomingDonorAlert,
     isCreateProfileOpen,
     closeCreateProfileModal,
   } = useApp();
@@ -135,6 +138,18 @@ function MainContent() {
           request={selectedPledgeRequest}
           onClose={closePledgeModal}
           onOpenDetails={(req) => {
+            openRequestDetail(req);
+          }}
+        />
+      )}
+
+      {incomingDonorAlert && (
+        <IncomingDonorAlertModal
+          isOpen={!!incomingDonorAlert}
+          request={incomingDonorAlert.request}
+          donorResponse={incomingDonorAlert.donorResponse}
+          onClose={closeIncomingDonorAlert}
+          onOpenFeedbackModal={(req) => {
             openRequestDetail(req);
           }}
         />

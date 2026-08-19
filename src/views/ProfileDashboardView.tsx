@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { TRANSLATIONS } from "../data/translations";
 import { DonorProfile, DonationRecord } from "../types";
-import { User, ShieldCheck, Award, Heart, Calendar, Phone, MapPin, Edit3, Lock, Unlock, Download, Plus, Star, CheckCircle2, X } from "lucide-react";
+import { User, ShieldCheck, Award, Heart, Calendar, Phone, MapPin, Edit3, Lock, Unlock, Download, Plus, Star, CheckCircle2, X, Radio, ArrowRight, Sparkles, Building, Eye } from "lucide-react";
 import { CertificateModal } from "../components/CertificateModal";
 import { CreateProfileModal } from "../components/CreateProfileModal";
 import { CircularCooldownWidget } from "../components/CircularCooldownWidget";
@@ -18,6 +18,10 @@ export const ProfileDashboardView: React.FC = () => {
     toggleE2EEncryption,
     isBiometricUnlocked,
     openCreateProfileModal,
+    requests,
+    openIncomingDonorAlert,
+    simulateIncomingDonorOffer,
+    openRequestDetail,
     theme
   } = useApp();
 
@@ -354,6 +358,144 @@ export const ProfileDashboardView: React.FC = () => {
                 </div>
               ))
             )}
+          </div>
+        </div>
+
+        {/* My Emergency Blood Requests & Incoming Donor Offers */}
+        <div className={`lg:col-span-3 p-6 border rounded-3xl shadow-xl space-y-4 ${
+          isDark ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-200 text-slate-900"
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700/50">
+            <div>
+              <h3 className="font-black text-base flex items-center gap-2">
+                <Heart className="w-5 h-5 text-rose-500 fill-rose-500 animate-pulse" />
+                <span>
+                  {language === "bn"
+                    ? "আমার রক্তের জরুরি আবেদন ও ডোনারের সাড়া (My Requests & Donor Alerts)"
+                    : "My Blood Requests & Incoming Donor Alerts"}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {language === "bn"
+                  ? "যেসব আবেদনের বিপরীতে রক্তদাতারা সাড়া দিয়েছেন তাদের সাথে যোগাযোগ করুন ও অগ্রগতি আপডেট করুন"
+                  : "View incoming donor offers, contact donors immediately, and track donation progress"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {requests.slice(0, 4).map((req) => {
+              const hasResponses = req.donorResponses && req.donorResponses.length > 0;
+              return (
+                <div
+                  key={req.id}
+                  className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
+                    hasResponses
+                      ? isDark
+                        ? "bg-emerald-950/20 border-emerald-500/50 shadow-lg shadow-emerald-950/20"
+                        : "bg-emerald-50/50 border-emerald-300 shadow-md"
+                      : isDark
+                      ? "bg-slate-950/60 border-slate-800"
+                      : "bg-slate-50 border-slate-200"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-600 flex items-center justify-center text-white font-black text-base shadow-md">
+                          {req.bloodGroup}
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-sm text-slate-100">{req.patientName}</h4>
+                          <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                            <Building className="w-3.5 h-3.5 text-rose-500" />
+                            <span>{req.hospitalName} ({req.district})</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        req.status === "Fulfilled"
+                          ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                          : req.status === "Donor Assigned"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse"
+                          : "bg-red-500/20 text-red-400 border border-red-500/30"
+                      }`}>
+                        {req.status}
+                      </span>
+                    </div>
+
+                    {/* Donor Responses List / Alert */}
+                    {hasResponses ? (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-black text-emerald-400 flex items-center gap-1.5 animate-pulse">
+                            <Radio className="w-3.5 h-3.5" />
+                            {language === "bn"
+                              ? `🔔 ${req.donorResponses.length} জন রক্তদাতা রক্ত দিতে প্রস্তুত!`
+                              : `🔔 ${req.donorResponses.length} Donor(s) pledged to donate!`}
+                          </span>
+                        </div>
+
+                        {req.donorResponses.map((dr, i) => (
+                          <div
+                            key={i}
+                            onClick={() => openIncomingDonorAlert(req, dr)}
+                            className={`p-3 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition-all hover:scale-[1.01] ${
+                              isDark ? "bg-slate-900 border-emerald-500/40 hover:bg-slate-850" : "bg-white border-emerald-300 hover:bg-emerald-50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                              <div>
+                                <strong className="block text-slate-100">{dr.donorName}</strong>
+                                <span className="text-[11px] text-slate-400">
+                                  {dr.donorPhone} • {dr.status}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1 shadow-sm"
+                            >
+                              <span>{language === "bn" ? "পপ-আপ দেখুন" : "View Alert"}</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 mt-3 italic">
+                        {language === "bn" ? "এখনও কোনো রক্তদাতা সাড়া দেননি। ডোনারদের নোটিফাই করা হচ্ছে।" : "Awaiting donor pledges."}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Actions: Test Simulation & Details */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/40 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => simulateIncomingDonorOffer(req.id)}
+                      className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+                      title="Simulate incoming donor offer popup"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                      <span>{language === "bn" ? "টেস্ট ডোনার সাড়া পাঠান" : "Simulate Donor Alert"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => openRequestDetail(req)}
+                      className="text-slate-400 hover:text-slate-200 font-bold flex items-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{language === "bn" ? "বিস্তারিত" : "Details"}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
