@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { EmergencyRequest } from "../types";
+import { safeToISODateString } from "../lib/bloodLogic";
 import { Star, Heart, CheckCircle2, X, Award, ShieldCheck } from "lucide-react";
 
 interface DonationFeedbackModalProps {
@@ -23,7 +24,7 @@ export const DonationFeedbackModal: React.FC<DonationFeedbackModalProps> = ({
   const [hospitalName, setHospitalName] = useState<string>("");
   const [units, setUnits] = useState<number>(1);
   const [donationDate, setDonationDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    safeToISODateString(new Date())
   );
 
   useEffect(() => {

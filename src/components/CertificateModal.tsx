@@ -16,6 +16,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { DonationRecord } from "../types";
+import { safeToISODateString } from "../lib/bloodLogic";
 
 interface CertificateModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
     recipientName: "Emergency ICU Patient",
     hospitalName: "Dhaka Medical College Hospital",
     bloodGroup: userProfile.bloodGroup,
-    date: userProfile.lastDonationDate || new Date().toISOString().split("T")[0],
+    date: safeToISODateString(userProfile.lastDonationDate),
     certificateId: `BM-BD-${userProfile.bloodGroup.replace("+", "P").replace("-", "N")}-${Math.floor(100000 + Math.random() * 900000)}`,
     verified: true,
     pointsAwarded: 100,

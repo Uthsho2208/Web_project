@@ -27,7 +27,10 @@ import {
   EligibilityStatus,
   rankDonorsForEmergencyRequest,
   RankedDonor,
-  isBloodCompatible
+  isBloodCompatible,
+  safeToISOString,
+  safeToISODateString,
+  safeParseDate
 } from "../lib/bloodLogic";
 
 interface AppContextType {
@@ -414,8 +417,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         (snapshot) => {
           if (!snapshot.empty) {
             const remoteRequests = snapshot.docs.map((docSnap) => docSnap.data() as EmergencyRequest);
-            // Sort descending by creation date
-            remoteRequests.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+            // Sort descending by creation date safely
+            remoteRequests.sort((a, b) => {
+              const timeA = safeParseDate(a.createdAt)?.getTime() || 0;
+              const timeB = safeParseDate(b.createdAt)?.getTime() || 0;
+              return timeB - timeA;
+            });
             setRequests(remoteRequests);
           }
         },
@@ -501,7 +508,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newReq: EmergencyRequest = {
       ...req,
       id: `req-${Date.now()}`,
-      createdAt: new Date().toISOString(),
+      createdAt: safeToISOString(new Date()),
       unitsFulfilled: 0,
       status: "Searching",
       donorResponses: []
@@ -854,9 +861,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newBadge = calculateDonorBadge(newTotal);
     const newEligibility = calculateEligibility(rec.date, userProfile.gender);
 
+    const validRecDate = safeToISODateString(rec.date);
     const updatedProfile: DonorProfile = {
       ...userProfile,
-      lastDonationDate: rec.date,
+      lastDonationDate: validRecDate,
       nextEligibleDate: newEligibility.nextEligibleDate,
       isAvailable: false, // In cooldown immediately after donation
       totalDonations: newTotal,
@@ -906,9 +914,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newRating = Number(((userProfile.rating * userProfile.reviewsCount + ratingGiven) / newCount).toFixed(1));
     const newEligibility = calculateEligibility(rec.date, userProfile.gender);
 
+    const validRecDate = safeToISODateString(rec.date);
     const updatedProfile: DonorProfile = {
       ...userProfile,
-      lastDonationDate: rec.date,
+      lastDonationDate: validRecDate,
       nextEligibleDate: newEligibility.nextEligibleDate,
       isAvailable: false, // Donor is now in medical cooldown
       totalDonations: newTotal,

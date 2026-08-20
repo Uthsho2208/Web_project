@@ -64,6 +64,48 @@ export function getDistrictCoordinates(district: string): { lat: number; lng: nu
 }
 
 /**
+ * Safely parses any date input (string, Date, number, null, undefined)
+ * Returns a valid Date object or null if parsing fails.
+ */
+export function safeParseDate(dateInput?: Date | string | number | null): Date | null {
+  if (!dateInput) return null;
+  try {
+    const d = typeof dateInput === "object" && dateInput instanceof Date ? dateInput : new Date(dateInput);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely formats date to ISO string (e.g. 2026-08-20T02:38:00.000Z)
+ * Never throws RangeError; falls back to current Date or provided fallback.
+ */
+export function safeToISOString(dateInput?: Date | string | number | null, fallbackDate?: Date | string): string {
+  try {
+    const parsed = safeParseDate(dateInput);
+    if (parsed) return parsed.toISOString();
+    const fallback = safeParseDate(fallbackDate) || new Date();
+    return fallback.toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
+/**
+ * Safely formats date to YYYY-MM-DD
+ * Never throws RangeError; falls back to today or provided fallback.
+ */
+export function safeToISODateString(dateInput?: Date | string | number | null, fallbackDate?: Date | string): string {
+  try {
+    const iso = safeToISOString(dateInput, fallbackDate);
+    return iso.split("T")[0] || new Date().toISOString().split("T")[0];
+  } catch {
+    return new Date().toISOString().split("T")[0];
+  }
+}
+
+/**
  * Medical Donation Eligibility Calculation
  * Male: 90 days (3 months), Female: 120 days (4 months), Other: 90 days
  */
@@ -81,28 +123,29 @@ export function calculateEligibility(
   gender: Gender = "Male"
 ): EligibilityStatus {
   const requiredIntervalDays = gender === "Female" ? 120 : 90;
+  const today = new Date();
+  const todayStr = safeToISODateString(today);
 
-  if (!lastDonationDate) {
-    const today = new Date().toISOString().split("T")[0];
+  const lastDate = safeParseDate(lastDonationDate);
+
+  if (!lastDate) {
     return {
       isEligible: true,
       requiredIntervalDays,
       daysPassed: 999,
       daysLeft: 0,
       progressPercent: 100,
-      nextEligibleDate: today
+      nextEligibleDate: todayStr
     };
   }
 
-  const lastDate = new Date(lastDonationDate);
-  const today = new Date();
   const diffMs = today.getTime() - lastDate.getTime();
   const daysPassed = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
   const daysLeft = Math.max(0, requiredIntervalDays - daysPassed);
   const progressPercent = Math.min(100, Math.floor((daysPassed / requiredIntervalDays) * 100));
 
-  const nextDateObj = new Date(lastDate.getTime() + requiredIntervalDays * 24 * 60 * 60 * 1000);
-  const nextEligibleDate = nextDateObj.toISOString().split("T")[0];
+  const nextTimestamp = lastDate.getTime() + requiredIntervalDays * 24 * 60 * 60 * 1000;
+  const nextEligibleDate = safeToISODateString(new Date(nextTimestamp), today);
 
   return {
     isEligible: daysLeft === 0,
