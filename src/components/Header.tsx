@@ -238,6 +238,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="max-w-7xl mx-auto flex items-center space-x-1.5 py-2 min-w-max text-xs sm:text-sm font-bold">
           {[
             { id: "emergency", label: t.tabEmergencyFeed, icon: "🚨" },
+            { id: "community", label: (t as any).tabCommunityHub || (language === "bn" ? "কমিউনিটি হাব" : "Community Hub"), icon: "👥" },
             { id: "donors", label: t.tabFindDonors, icon: "🩸" },
             { id: "blood-banks", label: t.tabBloodBanks, icon: "🏥" },
             { id: "gamification", label: t.tabGamification, icon: "🏆" },

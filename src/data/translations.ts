@@ -7,6 +7,7 @@ export const TRANSLATIONS = {
     // Navigation Tabs
     tabEmergencyFeed: "জরুরি রিকোয়েস্ট",
     tabFindDonors: "রক্তদাতা খুঁজুন",
+    tabCommunityHub: "কমিউনিটি মেম্বারস",
     tabBloodBanks: "ব্লাড ব্যাংক স্টকে",
     tabGamification: "লিডারবোর্ড ও পয়েন্ট",
     tabEligibility: "যোগ্যতা যাচাই",
@@ -122,6 +123,7 @@ export const TRANSLATIONS = {
     // Navigation Tabs
     tabEmergencyFeed: "Emergency Feed",
     tabFindDonors: "Find Donors",
+    tabCommunityHub: "Community Members",
     tabBloodBanks: "Blood Banks Stock",
     tabGamification: "Leaderboard & XP",
     tabEligibility: "Eligibility Checker",

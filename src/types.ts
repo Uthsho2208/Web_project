@@ -31,6 +31,13 @@ export interface DonorProfile {
   nextEligibleDate?: string;
   isEligible?: boolean;
   distanceKm?: number;
+  bio?: string;
+  profession?: string;
+  avatarBg?: string;
+  likesCount?: number;
+  joinedAt?: string;
+  facebookProfile?: string;
+  instagramProfile?: string;
 }
 
 export interface DonorResponseStatus {

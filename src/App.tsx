@@ -21,6 +21,7 @@ import { EligibilityCheckerCard } from "./views/EligibilityCheckerCard";
 import { CampsView } from "./views/CampsView";
 import { GuidelinesView } from "./views/GuidelinesView";
 import { ProfileDashboardView } from "./views/ProfileDashboardView";
+import { CommunityProfilesView } from "./views/CommunityProfilesView";
 
 function MainContent() {
   const {
@@ -92,6 +93,7 @@ function MainContent() {
             <EmergencyFeedView />
           </>
         )}
+        {activeTab === "community" && <CommunityProfilesView />}
         {activeTab === "donors" && <DonorDirectoryView />}
         {activeTab === "blood-banks" && <BloodBankView />}
         {activeTab === "gamification" && <GamificationView />}

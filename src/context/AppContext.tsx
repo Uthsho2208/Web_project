@@ -21,7 +21,7 @@ import {
 } from "../data/bdData";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
-import { collection, doc, setDoc, onSnapshot, writeBatch, query, where } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, onSnapshot, writeBatch, query, where } from "firebase/firestore";
 import {
   calculateEligibility,
   EligibilityStatus,
@@ -56,6 +56,7 @@ interface AppContextType {
   ) => Promise<void>;
   donors: DonorProfile[];
   addDonor: (donor: Omit<DonorProfile, "id" | "rating" | "reviewsCount" | "badge" | "points" | "isVerified">) => Promise<void>;
+  likeDonorProfile: (donorId: string) => Promise<void>;
   rankDonors: (request: EmergencyRequest, radiusKm?: number) => RankedDonor[];
   bloodBanks: BloodBank[];
   updateBloodBankStock: (bankId: string, group: BloodGroup, delta: number) => void;
@@ -343,17 +344,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
         if (user) {
           setCurrentUser(user);
-          // Sync profile ID to auth uid
-          setUserProfile((prev) => {
-            const updated = {
-              ...prev,
-              id: user.uid,
-              name: user.displayName || prev.name,
-              phone: user.phoneNumber || prev.phone
-            };
-            localStorage.setItem("rakta_user", JSON.stringify(updated));
-            return updated;
-          });
+          // Check if profile exists in Firestore for this authenticated user
+          try {
+            const userDocRef = doc(db, "donors", user.uid);
+            const userSnap = await getDoc(userDocRef);
+            if (userSnap.exists()) {
+              const cloudProfile = userSnap.data() as DonorProfile;
+              setUserProfile(cloudProfile);
+              localStorage.setItem("rakta_user", JSON.stringify(cloudProfile));
+            } else {
+              // Persist current profile with this user ID
+              setUserProfile((prev) => {
+                const updated = {
+                  ...prev,
+                  id: user.uid,
+                  name: user.displayName || prev.name,
+                  phone: user.phoneNumber || prev.phone
+                };
+                localStorage.setItem("rakta_user", JSON.stringify(updated));
+                setDoc(userDocRef, sanitizeForFirestore(updated), { merge: true }).catch((e) =>
+                  console.warn("Initial profile seed warn:", e)
+                );
+                return updated;
+              });
+            }
+          } catch (err) {
+            console.warn("Firestore profile fetch warning:", err);
+          }
         } else {
           // Auto sign in anonymously so that every user session has a secure, unique Firebase UID
           signInAnonymously(auth).catch((err) => {
@@ -478,6 +495,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn("User profile listener setup:", e);
     }
   }, [userProfile.id]);
+
+  // Firestore Real-Time Listener: Donation Records & Certificates
+  useEffect(() => {
+    if (!userProfile.id) return;
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, "donations"),
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const allDonations = snapshot.docs.map((docSnap) => docSnap.data() as DonationRecord & { userId?: string });
+            const userDonations = allDonations.filter((d) => !d.userId || d.userId === userProfile.id);
+            if (userDonations.length > 0) {
+              setMyDonationRecords(userDonations);
+            }
+          }
+        },
+        (err) => {
+          console.warn("Donations snapshot listener:", err);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn("Donations listener setup error:", e);
+    }
+  }, [userProfile.id]);
+
+  // Firestore Real-Time Listener: Blood Banks Inventory
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, "bloodbanks"),
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const remoteBanks = snapshot.docs.map((docSnap) => docSnap.data() as BloodBank);
+            setBloodBanks(remoteBanks);
+          }
+        },
+        (err) => {
+          console.warn("Blood banks snapshot listener:", err);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn("Blood banks listener setup error:", e);
+    }
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -722,6 +785,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const likeDonorProfile = async (donorId: string): Promise<void> => {
+    let targetDonor = donors.find((d) => d.id === donorId);
+    if (!targetDonor && userProfile.id === donorId) {
+      targetDonor = userProfile;
+    }
+    if (!targetDonor) return;
+
+    const newLikes = (targetDonor.likesCount || 0) + 1;
+    const updatedDonor: DonorProfile = {
+      ...targetDonor,
+      likesCount: newLikes
+    };
+
+    setDonors((prev) => prev.map((d) => (d.id === donorId ? updatedDonor : d)));
+    if (userProfile.id === donorId) {
+      setUserProfile(updatedDonor);
+    }
+
+    try {
+      await setDoc(doc(db, "donors", donorId), sanitizeForFirestore(updatedDonor), { merge: true });
+      triggerNotification(
+        language === "bn"
+          ? `❤️ ${targetDonor.name}-কে ভালোবাসা ও সম্মাননা পাঠানো হয়েছে!`
+          : `❤️ Sent appreciation to ${targetDonor.name}!`
+      );
+    } catch (err) {
+      console.warn("Error liking donor in Firestore:", err);
+    }
+  };
+
   const rankDonors = (request: EmergencyRequest, radiusKm: number = 50): RankedDonor[] => {
     return rankDonorsForEmergencyRequest(donors, request, radiusKm);
   };
@@ -730,11 +823,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCamps((prev) =>
       prev.map((c) => {
         if (c.id === campId) {
-          return {
+          const updated = {
             ...c,
             registeredCount: c.isUserRegistered ? c.registeredCount - 1 : c.registeredCount + 1,
             isUserRegistered: !c.isUserRegistered
           };
+          setDoc(doc(db, "camps", c.id), sanitizeForFirestore(updated), { merge: true }).catch((e) =>
+            console.warn("Camp sync warn:", e)
+          );
+          return updated;
         }
         return c;
       })
@@ -777,7 +874,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (bank.id === bankId) {
           const currentCount = bank.inventory[group] || 0;
           const newCount = Math.max(0, currentCount + delta);
-          return {
+          const updated = {
             ...bank,
             inventory: {
               ...bank.inventory,
@@ -785,6 +882,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             },
             lastUpdated: language === "bn" ? "এইমাত্র আপডেটকৃত" : "Just now"
           };
+          setDoc(doc(db, "bloodbanks", bank.id), sanitizeForFirestore(updated), { merge: true }).catch((e) =>
+            console.warn("Blood bank sync warn:", e)
+          );
+          return updated;
         }
         return bank;
       })
@@ -810,21 +911,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
+    const updated = {
+      ...bank,
+      inventory: {
+        ...bank.inventory,
+        [group]: Math.max(0, (bank.inventory[group] || 0) - units)
+      },
+      lastUpdated: language === "bn" ? "এইমাত্র রিকুইজিশন গৃহীত" : "Requisition approved just now"
+    };
+
     setBloodBanks((prev) =>
-      prev.map((b) => {
-        if (b.id === bankId) {
-          return {
-            ...b,
-            inventory: {
-              ...b.inventory,
-              [group]: Math.max(0, (b.inventory[group] || 0) - units)
-            },
-            lastUpdated: language === "bn" ? "এইমাত্র রিকুইজিশন গৃহীত" : "Requisition approved just now"
-          };
-        }
-        return b;
-      })
+      prev.map((b) => (b.id === bankId ? updated : b))
     );
+
+    try {
+      await setDoc(doc(db, "bloodbanks", bank.id), sanitizeForFirestore(updated), { merge: true });
+    } catch (e) {
+      console.warn("Blood bank reservation sync warn:", e);
+    }
 
     triggerNotification(
       language === "bn"
@@ -1013,6 +1117,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateDonorResponseStatus,
         donors,
         addDonor,
+        likeDonorProfile,
         rankDonors,
         bloodBanks,
         updateBloodBankStock,

@@ -33,6 +33,9 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
   const [lastDonationDate, setLastDonationDate] = useState("2026-05-01");
   const [isAvailable, setIsAvailable] = useState(true);
   const [medicalNotes, setMedicalNotes] = useState("");
+  const [bio, setBio] = useState("");
+  const [profession, setProfession] = useState("");
+  const [facebookProfile, setFacebookProfile] = useState("");
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -70,6 +73,9 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
         setLastDonationDate(prevLastDate || "2026-05-01");
       }
       setMedicalNotes(userProfile?.medicalNotes || "");
+      setBio(userProfile?.bio || "");
+      setProfession(userProfile?.profession || "");
+      setFacebookProfile(userProfile?.facebookProfile || "");
       setFormErrors({});
     }
   }, [isOpen, userProfile]);
@@ -146,6 +152,9 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
       badge: "BloodMate Lifesaver",
       points: userProfile?.points ? userProfile.points + 100 : 500,
       isVerified: true,
+      bio: bio || (language === "bn" ? "রক্তদানই মানবতার শ্রেষ্ঠ উপহার ❤️" : "Proud voluntary blood donor."),
+      profession: profession || (language === "bn" ? "রক্তদাতা স্বেচ্ছাসেবক" : "Volunteer Donor"),
+      facebookProfile: facebookProfile || "",
       medicalNotes: medicalNotes || (language === "bn" ? "জরুরি প্রয়োজনে রক্তদানে সম্পূর্ণ ইচ্ছুক ও প্রস্তুত।" : "Voluntary donor ready for emergency calls.")
     });
 
@@ -165,6 +174,9 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
       totalDonations: isNeverDonated ? 0 : (userProfile?.totalDonations || 3),
       e2eEncrypted: true,
       hidePhoneInPublic: false,
+      bio: bio || (language === "bn" ? "রক্তদানই মানবতার শ্রেষ্ঠ উপহার ❤️" : "Proud voluntary blood donor."),
+      profession: profession || (language === "bn" ? "রক্তদাতা স্বেচ্ছাসেবক" : "Volunteer Donor"),
+      facebookProfile: facebookProfile || "",
       medicalNotes: medicalNotes || (language === "bn" ? "BloodMate রেজিস্ট্রেশনকৃত প্রস্তুত রক্তদাতা।" : "Verified BloodMate registered donor.")
     });
 
@@ -521,6 +533,53 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({
                 }`}
               ></div>
             </button>
+          </div>
+
+          {/* Social Community Bio & Profession */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={`block font-semibold mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                {language === "bn" ? "পেশা / পদবী (ঐচ্ছিক)" : "Profession / Title (Optional)"}
+              </label>
+              <input
+                type="text"
+                value={profession}
+                onChange={(e) => setProfession(e.target.value)}
+                placeholder={language === "bn" ? "যেমন: সফটওয়্যার ইঞ্জিনিয়ার / ছাত্র" : "e.g. Student / Teacher / Volunteer"}
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                  isDark ? "bg-slate-800 text-white border-slate-700" : "bg-slate-50 text-slate-900 border-slate-300"
+                }`}
+              />
+            </div>
+            <div>
+              <label className={`block font-semibold mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                {language === "bn" ? "ফেসবুক প্রোফাইল / ইউজারনেম (ঐচ্ছিক)" : "Facebook Profile / Username (Optional)"}
+              </label>
+              <input
+                type="text"
+                value={facebookProfile}
+                onChange={(e) => setFacebookProfile(e.target.value)}
+                placeholder={language === "bn" ? "যেমন: fb.com/yourname" : "e.g. facebook.com/username"}
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                  isDark ? "bg-slate-800 text-white border-slate-700" : "bg-slate-50 text-slate-900 border-slate-300"
+                }`}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className={`block font-semibold mb-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+              {language === "bn" ? "কমিউনিটি বায়ো / প্রিয় উক্তি (ঐচ্ছিক)" : "Community Bio / Motto (Optional)"}
+            </label>
+            <input
+              type="text"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder={language === "bn" ? "যেমন: রক্তদানই মানবতার শ্রেষ্ঠ উপহার ❤️" : "e.g. Blood donation is the gift of life ❤️"}
+              className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                isDark ? "bg-slate-800 text-white border-slate-700" : "bg-slate-50 text-slate-900 border-slate-300"
+              }`}
+            />
           </div>
 
           {/* Notes */}

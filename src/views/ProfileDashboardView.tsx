@@ -35,6 +35,8 @@ export const ProfileDashboardView: React.FC = () => {
   const [phone, setPhone] = useState(userProfile.phone);
   const [whatsapp, setWhatsapp] = useState(userProfile.whatsapp || "");
   const [medicalNotes, setMedicalNotes] = useState(userProfile.medicalNotes || "");
+  const [bio, setBio] = useState(userProfile.bio || "");
+  const [profession, setProfession] = useState(userProfile.profession || "");
 
   // Add donation record modal state
   const [showAddRecordModal, setShowAddRecordModal] = useState(false);
@@ -53,7 +55,9 @@ export const ProfileDashboardView: React.FC = () => {
       area,
       phone,
       whatsapp,
-      medicalNotes
+      medicalNotes,
+      bio,
+      profession
     });
     setIsEditing(false);
   };
@@ -231,6 +235,30 @@ export const ProfileDashboardView: React.FC = () => {
                 />
               </div>
               <div>
+                <label className="font-semibold block mb-1 opacity-80">Profession / Title</label>
+                <input
+                  type="text"
+                  value={profession}
+                  onChange={(e) => setProfession(e.target.value)}
+                  placeholder="e.g. Software Engineer / Student"
+                  className={`w-full px-3 py-2 border rounded-xl ${
+                    isDark ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1 opacity-80">Community Bio / Motto</label>
+                <input
+                  type="text"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="e.g. রক্তদানই মানবতার শ্রেষ্ঠ উপহার ❤️"
+                  className={`w-full px-3 py-2 border rounded-xl ${
+                    isDark ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                />
+              </div>
+              <div>
                 <label className="font-semibold block mb-1 opacity-80">Medical Notes</label>
                 <textarea
                   rows={2}
@@ -243,13 +271,21 @@ export const ProfileDashboardView: React.FC = () => {
               </div>
               <button
                 type="submit"
-                className="w-full py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs"
+                className="w-full py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs cursor-pointer"
               >
                 Save Changes
               </button>
             </form>
           ) : (
             <div className="space-y-2.5 text-xs opacity-90">
+              <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                <span className="opacity-70">Profession:</span>
+                <span className="font-semibold">{userProfile.profession || "Volunteer Donor"}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                <span className="opacity-70">Community Bio:</span>
+                <span className="font-semibold italic truncate max-w-[150px]">{userProfile.bio || "Proud Blood Donor ❤️"}</span>
+              </div>
               <div className="flex justify-between py-1.5 border-b border-slate-700/40">
                 <span className="opacity-70">Gender & Age:</span>
                 <span className="font-semibold">{userProfile.gender}, {userProfile.age} Yrs</span>
